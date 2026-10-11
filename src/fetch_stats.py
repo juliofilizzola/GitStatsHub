@@ -114,6 +114,7 @@ def get_stats(username: str) -> dict:
     
     return stats
 
+
 def main():
     username = os.getenv("GITHUB_USERNAME") or os.getenv("GITHUB_ACTOR")
     if not username:
@@ -122,12 +123,16 @@ def main():
     print(f"Fetching stats for user: {username}")
     stats = get_stats(username)
 
-    # Exporting directly to dist/stats.json
-    os.makedirs("dist", exist_ok=True)
-    with open("dist/stats.json", "w", encoding="utf-8") as f:
+    # Descobre o caminho raiz do projeto para salvar em public/stats.json
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    public_dir = os.path.join(base_dir, "public")
+    os.makedirs(public_dir, exist_ok=True)
+
+    output_file = os.path.join(public_dir, "stats.json")
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(stats, f, indent=2, ensure_ascii=False)
-    
-    print("Successfully generated dist/stats.json")
+
+    print(f"Successfully generated {output_file}")
 
 if __name__ == "__main__":
     main()
