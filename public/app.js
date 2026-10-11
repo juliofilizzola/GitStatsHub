@@ -19,10 +19,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('updated-at').textContent = `Última atualização: ${date}`;
 
         // KPI Stats
-        document.getElementById('stat-repos').textContent = data.profile.public_repos;
+        const totalRepos = data.profile.public_repos ?? 0;
+        const forkedReposCount = (data.profile.forked_repos !== undefined) 
+            ? data.profile.forked_repos 
+            : (Array.isArray(data.forked_repos) ? data.forked_repos.length : 0);
+        const originalReposCount = (data.profile.original_repos !== undefined)
+            ? data.profile.original_repos
+            : Math.max(0, totalRepos - forkedReposCount);
+
+        document.getElementById('stat-repos').textContent = totalRepos;
+        const originalReposEl = document.getElementById('stat-original-repos');
+        if (originalReposEl) originalReposEl.textContent = originalReposCount;
+        const forkedReposEl = document.getElementById('stat-forked-repos');
+        if (forkedReposEl) forkedReposEl.textContent = forkedReposCount;
+
         document.getElementById('stat-followers').textContent = data.profile.followers;
         document.getElementById('stat-stars').textContent = data.profile.total_stars;
         document.getElementById('stat-forks').textContent = data.profile.total_forks;
+
+        // Forks Modal Setup
+        setupForksModal(data);
 
         // Contributions
         document.getElementById('stat-commits').textContent = data.contributions.last_year_commits;
@@ -184,3 +200,136 @@ function updateChartTheme(isDark) {
     
     languageChartInstance.update();
 }
+
+function setupForksModal(data) {
+    const modal = document.getElementById('forks-modal');
+    const modalCard = document.getElementById('forks-modal-card');
+    const openBtn = document.getElementById('btn-view-forks');
+    const closeBtn = document.getElementById('close-forks-modal');
+    const forksList = document.getElementById('forks-list');
+    const forksBadge = document.getElementById('modal-forks-badge');
+    const forksTotal = document.getElementById('modal-forks-total');
+    const ghForksLink = document.getElementById('github-forks-link');
+
+    if (!modal || !openBtn) return;
+
+    const forkedRepos = data.forked_repos || [];
+    const count = (data.profile && data.profile.forked_repos !== undefined)
+        ? data.profile.forked_repos
+        : forkedRepos.length;
+
+    if (forksBadge) forksBadge.textContent = count;
+    if (forksTotal) forksTotal.textContent = count;
+
+    if (ghForksLink && data.profile && data.profile.login) {
+        ghForksLink.href = `https://github.com/${data.profile.login}?tab=repositories&q=&type=fork`;
+    }
+
+    const renderList = () => {
+        if (!forksList) return;
+        if (forkedRepos.length === 0) {
+            forksList.innerHTML = `
+                <div class="text-center text-textMuted py-10 flex flex-col items-center">
+                    <i class="fas fa-code-branch text-4xl mb-3 opacity-40"></i>
+                    <p class="font-medium">Nenhum repositório forkado encontrado.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const titleClass = isDark ? 'text-white' : 'text-gray-900';
+
+        forksList.innerHTML = forkedRepos.map(repo => `
+            <a href="${repo.html_url}" target="_blank" rel="noopener noreferrer" 
+               class="block p-4 rounded-xl bg-card/60 hover:bg-card border border-border hover:border-purple-500/50 transition-all duration-200 group">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <i class="fas fa-code-branch text-purple-400 text-xs"></i>
+                            <span class="font-semibold ${titleClass} group-hover:text-primary transition-colors truncate">${escapeHtml(repo.name)}</span>
+                            <i class="fas fa-arrow-up-right-from-square text-[10px] text-textMuted opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
+                        ${repo.description ? `<p class="text-xs text-textMuted line-clamp-2 mb-2.5 leading-relaxed">${escapeHtml(repo.description)}</p>` : ''}
+                        <div class="flex items-center gap-4 text-xs text-textMuted">
+                            ${repo.language ? `
+                                <span class="inline-flex items-center gap-1.5 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                                    ${escapeHtml(repo.language)}
+                                </span>` : ''}
+                            ${repo.stargazers_count > 0 ? `
+                                <span class="inline-flex items-center gap-1">
+                                    <i class="fas fa-star text-yellow-400 text-[10px]"></i>
+                                    ${repo.stargazers_count}
+                                </span>` : ''}
+                            ${repo.forks_count > 0 ? `
+                                <span class="inline-flex items-center gap-1">
+                                    <i class="fas fa-code-fork text-purple-400 text-[10px]"></i>
+                                    ${repo.forks_count}
+                                </span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    };
+
+    renderList();
+
+    const openModal = () => {
+        renderList();
+        modal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            modalCard.classList.remove('scale-95');
+            modalCard.classList.add('scale-100');
+        });
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeModal = () => {
+        modal.classList.add('opacity-0');
+        modalCard.classList.remove('scale-100');
+        modalCard.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    };
+
+    openBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal();
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModal();
+        });
+    }
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, function(m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[m];
+    });
+}
+
