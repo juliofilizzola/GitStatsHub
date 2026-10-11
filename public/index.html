@@ -108,7 +108,17 @@
             <div class="glass-card p-6 flex flex-col items-center justify-center text-center hover:-translate-y-1 transition-transform duration-300">
                 <i class="fas fa-book-open text-primary text-3xl mb-3 opacity-90"></i>
                 <h3 class="text-4xl font-bold text-white mb-1" id="stat-repos">-</h3>
-                <p class="text-xs md:text-sm text-textMuted uppercase tracking-widest font-semibold">Repositórios</p>
+                <p class="text-xs md:text-sm text-textMuted uppercase tracking-widest font-semibold mb-2">Repositórios</p>
+                <div class="flex items-center gap-1.5 text-xs text-textMuted bg-card/70 border border-border px-2.5 py-1 rounded-full shadow-sm">
+                    <span title="Repositórios autorais criados por você" class="inline-flex items-center gap-1">
+                        <span id="stat-original-repos" class="font-semibold text-white">-</span> próprios
+                    </span>
+                    <span class="text-border">•</span>
+                    <button id="btn-view-forks" type="button" title="Clique para ver os repositórios forkados" class="inline-flex items-center gap-1 text-purple-400 hover:text-purple-300 transition-colors cursor-pointer group">
+                        <span id="stat-forked-repos" class="font-semibold">-</span> forks
+                        <i class="fas fa-chevron-right text-[9px] group-hover:translate-x-0.5 transition-transform opacity-70"></i>
+                    </button>
+                </div>
             </div>
             <div class="glass-card p-6 flex flex-col items-center justify-center text-center hover:-translate-y-1 transition-transform duration-300">
                 <i class="fas fa-users text-green-400 text-3xl mb-3 opacity-90"></i>
@@ -178,6 +188,44 @@
         <footer class="text-center text-textMuted text-sm mt-8 pb-4">
             Feito com <i class="fas fa-heart text-red-500 mx-1"></i> Pelo Julio Filizzola. Atualizado automaticamente pelo GitHub Actions.
         </footer>
+    </div>
+
+    <!-- Modal de Repositórios Forkados -->
+    <div id="forks-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="glass-card max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-border scale-95 transition-all duration-300" id="forks-modal-card">
+            <!-- Modal Header -->
+            <div class="p-5 md:p-6 border-b border-border flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                        <i class="fas fa-code-branch text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            Repositórios Forkados
+                            <span id="modal-forks-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 font-semibold border border-purple-500/30">0</span>
+                        </h3>
+                        <p class="text-xs text-textMuted mt-0.5">Repositórios públicos de outros autores que você fez fork</p>
+                    </div>
+                </div>
+                <button id="close-forks-modal" type="button" class="p-2 rounded-lg text-textMuted hover:text-white hover:bg-card border border-transparent hover:border-border transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body (List of forked repos) -->
+            <div id="forks-list" class="p-4 md:p-6 overflow-y-auto space-y-3 flex-1 max-h-[55vh]">
+                <!-- Carregado dinamicamente -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-border bg-card/40 flex items-center justify-between text-xs text-textMuted">
+                <span>Total de <strong id="modal-forks-total" class="text-purple-400 font-semibold">0</strong> repositórios forkados</span>
+                <a id="github-forks-link" href="#" target="_blank" class="inline-flex items-center gap-1.5 text-primary hover:text-blue-400 font-medium transition-colors">
+                    <span>Ver no GitHub</span>
+                    <i class="fas fa-external-link-alt text-[10px]"></i>
+                </a>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
