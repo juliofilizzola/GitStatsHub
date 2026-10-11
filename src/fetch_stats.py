@@ -40,12 +40,25 @@ def get_stats(username: str) -> dict:
     total_stars = 0
     total_forks = 0
     languages = {}
+    forked_repos_list = []
+    original_repos_count = 0
 
     for repo in repos:
-        # Ignore forks for stars and languages to be more accurate about original work
+        # Repositórios que o usuário fez fork
         if repo.get("fork"):
+            forked_repos_list.append({
+                "name": repo.get("name"),
+                "full_name": repo.get("full_name"),
+                "html_url": repo.get("html_url"),
+                "description": repo.get("description") or "",
+                "language": repo.get("language") or "",
+                "stargazers_count": repo.get("stargazers_count", 0),
+                "forks_count": repo.get("forks_count", 0)
+            })
             continue
         
+        # Ignora forks para estrelas e linguagens para refletir trabalho autoral
+        original_repos_count += 1
         total_stars += repo.get("stargazers_count", 0)
         total_forks += repo.get("forks_count", 0)
         
@@ -93,16 +106,26 @@ def get_stats(username: str) -> dict:
         except Exception as e:
             print(f"Warning: Failed to fetch GraphQL data: {e}")
     
+    total_public_repos = user_data.get("public_repos", len(repos))
+    forked_repos_count = len(forked_repos_list)
+    if len(repos) == total_public_repos:
+        final_original_count = original_repos_count
+    else:
+        final_original_count = max(0, total_public_repos - forked_repos_count)
+
     stats = {
         "profile": {
             "name": user_data.get("name") or username,
             "login": username,
             "avatar_url": user_data.get("avatar_url"),
-            "public_repos": user_data.get("public_repos"),
+            "public_repos": total_public_repos,
+            "original_repos": final_original_count,
+            "forked_repos": forked_repos_count,
             "followers": user_data.get("followers"),
             "total_stars": total_stars,
             "total_forks": total_forks,
         },
+        "forked_repos": forked_repos_list,
         "languages": languages,
         "contributions": {
             "last_year_commits": commits_count,
@@ -133,6 +156,14 @@ def main():
         json.dump(stats, f, indent=2, ensure_ascii=False)
 
     print(f"Successfully generated {output_file}")
+
+    # Se a pasta dist existir (ex: build no GitHub Actions ou local), também salva nela
+    dist_dir = os.path.join(base_dir, "dist")
+    if os.path.exists(dist_dir):
+        dist_output = os.path.join(dist_dir, "stats.json")
+        with open(dist_output, "w", encoding="utf-8") as f:
+            json.dump(stats, f, indent=2, ensure_ascii=False)
+        print(f"Successfully generated {dist_output}")
 
 if __name__ == "__main__":
     main()

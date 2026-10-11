@@ -31,16 +31,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Prepare build directory
-        run: |
-          mkdir -p dist
-          cp -r public/* dist/
-
       - name: Fetch GitHub Stats via Python API
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: python src/fetch_stats.py
+
+      - name: Prepare build directory
+        run: |
+          mkdir -p dist
+          cp -r public/* dist/
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
